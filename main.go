@@ -49,7 +49,7 @@ func backup(ipaddress string, token string, outfile string) {
     outstring := ""
 	for _, element := range pairs {
         encoded_value := base64.StdEncoding.EncodeToString(element.Value)
-        outstring += fmt.Sprintf("%s:%s\n", element.Key, encoded_value)
+        outstring += fmt.Sprintf("%s|%s\n", element.Key, encoded_value)
 	}
 
     file, err := os.Create(outfile)
@@ -75,11 +75,9 @@ func backupAcls(ipaddress string, token string, outfile string) {
     if err != nil {
             panic(err)
         }
-    // sort.Sort(ByCreateIndex(tokens))
 
     outstring := ""
 	for _, element := range tokens {
-        // outstring += fmt.Sprintf("%s:%s:%s:%s\n", element.ID, element.Name, element.Type, element.Rules)
         outstring += fmt.Sprintf("====\nID: %s\nName: %s\nType: %s\nRules:\n%s\n", element.ID, element.Name, element.Type, element.Rules)
 	}
 
@@ -94,8 +92,14 @@ func backupAcls(ipaddress string, token string, outfile string) {
 }
 
 /* File needs to be in the following format:
+    KEY1|VALUE1
+    KEY2|VALUE2
+
+    Also supports 
     KEY1:VALUE1
     KEY2:VALUE2
+    for backward compatibility
+
 */
 func restore(ipaddress string, token string, infile string) {
 
@@ -112,7 +116,10 @@ func restore(ipaddress string, token string, infile string) {
     kv := client.KV()
 
     for _, element := range strings.Split(string(data), "\n") {
-        kvp := strings.Split(element, ":")
+        kvp := strings.Split(element, "|")
+        if len(kvp) == 0 {
+            kvp = strings.Split(element, ":")
+        }
 
         if len(kvp) > 1 {
             decoded_value, decode_err := base64.StdEncoding.DecodeString(kvp[1])
