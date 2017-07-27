@@ -117,13 +117,15 @@ func restore(ipaddress string, token string, infile string) {
         if len(kvp) > 1 {
             decoded_value, decode_err := base64.StdEncoding.DecodeString(kvp[1])
             if decode_err != nil {
-                panic(decode_err)
+                fmt.Printf("err decoding k: [%s] v: [%s], e: [%v]\n", kvp[0], kvp[1], decode_err)
+                continue
             }
 
             p := &api.KVPair{Key: kvp[0], Value: decoded_value}
             _, err := kv.Put(p, nil)
             if err != nil {
-                panic(err)
+                fmt.Printf("err putting k: [%s] v: [%s], e: [%v]\n", kvp[0], decoded_value, err)
+                continue
             }
         }
     }
